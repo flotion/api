@@ -1,20 +1,42 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
-    "module": "commonjs",
-    "target": "esnext",
-    "lib": ["esnext", "DOM", "DOM.Iterable", "WebWorker"],
-    "alwaysStrict": true,
-    "strict": true,
+    "module": "ES2020",
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable", "WebWorker"],
+    "strict": false,
     "preserveConstEnums": true,
     "moduleResolution": "node",
-    "sourceMap": true,
-    "esModuleInterop": true
+    "inlineSourceMap": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowUnusedLabels": true,
+    "suppressExcessPropertyErrors": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "noStrictGenericChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "importHelpers": true,
+    "noEmitHelpers": true,
+    "baseUrl": ".",
+    "paths": {
+      "~": ["./src/"],
+      "~/*": ["./src/*"]
+    },
+    "types": [
+      "@cloudflare/workers-types",
+      "itty-router-extras",
+      "itty-router"
+    ]
   },
-  "include": [
-    "./src/*.ts",
-    "./src/**/*.ts",
-    "./node_modules/@cloudflare/workers-types/index.d.ts"
+  "files": [
+    "./src/index.ts",
+    "./src/notion.ts",
+    "./src/utils.ts",
+    "./src/types.ts",
+    "./node_modules/@cloudflare/workers-types/index.d.ts",
+    "./node_modules/itty-router/dist/itty-router.d.ts"
   ],
-  "exclude": ["node_modules/", "dist/"]
+  "exclude": ["node_modules/", "dist", ".builds"]
 }

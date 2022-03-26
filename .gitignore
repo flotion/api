@@ -2,3 +2,17 @@ dist
 node_modules
 worker
 wrangler.toml
+.cache
+.builds
+.env
+.env.*
+.env.*
+*.env
+*.env.*
+!.env.project
+!.env.sample
+!.env.example
+.DS_Store
+Thumbs.db
+.*.swp
+.*.log

@@ -1,19 +1,7 @@
-import {
-  JSONData,
-  NotionUserType,
-  LoadPageChunkData,
-  CollectionData,
-  NotionSearchParamsType,
-  NotionSearchResultsType,
-} from "./types";
+import { INotionParams, LoadPageChunkData, CollectionData, NotionUserType, NotionSearchParamsType, NotionSearchResultsType, CollectionType, RowType, RowContentType } from "./types";
+import { getNotionValue } from "./utils";
 
 const NOTION_API = "https://www.notion.so/api/v3";
-
-interface INotionParams {
-  resource: string;
-  body: JSONData;
-  notionToken?: string;
-}
 
 const loadPageChunkBody = {
   limit: 100,
@@ -103,7 +91,7 @@ export const fetchNotionUsers = async (
   const users = await fetchNotionData<{ results: NotionUserType[] }>({
     resource: "getRecordValues",
     body: {
-      requests: userIds.map((id) => ({ id, table: "notion_user" })),
+      requests: userIds.map(id => ({ id, table: "notion_user" })),
     },
     notionToken,
   });
@@ -113,7 +101,7 @@ export const fetchNotionUsers = async (
         id: u.value.id,
         firstName: u.value.given_name,
         lastLame: u.value.family_name,
-        fullName: u.value.given_name + " " + u.value.family_name,
+        fullName: u.value.full_name ?? [u.value.given_name, u.value.family_name].join(' '),
         profilePhoto: u.value.profile_photo,
       };
       return user;
@@ -162,10 +150,54 @@ export const fetchNotionSearch = async (
         createdTime: {},
         ...params.filters,
       },
-      sort: "Relevance",
+      sort: params.sort || "Relevance",
       limit: params.limit || 20,
       query: params.query,
     },
     notionToken,
   });
+};
+
+export async function getTableData(
+  collection: CollectionType,
+  collectionViewId: string,
+  notionToken?: string,
+  raw?: boolean
+): Promise<any> {
+  const table = await fetchTableData(
+    collection.value.id,
+    collectionViewId,
+    notionToken
+  );
+  const collectionRows = collection.value.schema;
+  const collectionColKeys = Object.keys(collectionRows);
+  const tableArr: RowType[] = table.result.reducerResults.collection_group_results.blockIds.map(
+    (id: string) => table.recordMap.block[id]
+  );
+  const tableData = tableArr.filter(
+    b => b?.value && b?.value?.properties && (b?.value?.parent_id === collection?.value?.id)
+  );
+  type Row = { id: string;[key: string]: RowContentType };
+  let rows: Row[] = [];
+
+  for (const td of tableData) {
+    let row: Row = { id: td.value.id };
+    for (const key of collectionColKeys) {
+      const val = td.value.properties[key];
+      if (val) {
+        const schema = collectionRows[key];
+        row[schema.name] = raw ? val : getNotionValue(val, schema.type, td);
+        if (schema.type === "person" && row[schema.name]) {
+          const users = await fetchNotionUsers(row[schema.name] as string[]);
+          row[schema.name] = users as any;
+        }
+      }
+    }
+    rows = [...rows, row];
+  }
+
+  return {
+    rows,
+    schema: collectionRows
+  };
 };
